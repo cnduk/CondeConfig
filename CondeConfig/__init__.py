@@ -1,3 +1,4 @@
+from glob import glob
 import json
 import six
 
@@ -101,9 +102,10 @@ def config_init_from_file(filename):
     Args:
         filename (string): location of json file
     """
-    json_data = _load_json(filename)
-    _, items = get_config(())
-    items.update(json_data)
+    for a_filename in glob(filename):
+        json_data = _load_json(a_filename)
+        _, items = get_config(())
+        items.update(json_data)
 
 
 def config_into(data, namespace):
@@ -125,8 +127,9 @@ def config_into_from_file(filename, namespace):
         filename (string): location of json file
         namespace (string): namespace
     """
-    json_data = _load_json(filename)
-    config_into(json_data, namespace)
+    for a_filename in glob(filename):
+        json_data = _load_json(a_filename)
+        config_into(json_data, namespace)
 
 
 def config_set(key, value, namespace=None):
