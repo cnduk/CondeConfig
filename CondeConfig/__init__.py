@@ -59,6 +59,13 @@ class _Config(object):
         return self._config_items.get(*args, **kwargs)
 
 
+def _create_namespace(namespace):
+    new_items = {}
+    new_cfg = _Config()
+    _OBJECTS[new_cfg] = (new_items, namespace)
+    _NAMESPACES[namespace] = (new_cfg, new_items)
+
+
 def _load_json(filename):
     with open(filename) as json_file:
         return json.load(json_file)
@@ -76,12 +83,19 @@ def get_config(namespace):
     assert isinstance(namespace, tuple)
     assert all(isinstance(i, six.string_types) for i in namespace)
 
-    # e.g. namespace = ('config', 'brand', 'vogue')
     if namespace not in _NAMESPACES:
-        new_items = {}
-        new_cfg = _Config()
-        _OBJECTS[new_cfg] = (new_items, namespace)
-        _NAMESPACES[namespace] = (new_cfg, new_items)
+        # ()
+        if len(namespace) == 0:
+            _create_namespace(namespace)
+
+        # ('some', 'actual', 'items')
+        else:
+            for index, _ in enumerate(namespace):
+                current_namespace = namespace[:index+1]
+
+                if current_namespace not in _NAMESPACES:
+                    _create_namespace(current_namespace)
+
 
     return _NAMESPACES[namespace]
 
