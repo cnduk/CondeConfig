@@ -1,5 +1,6 @@
 from glob import glob
 import json
+from os.path import basename, splitext
 import six
 
 _NAMESPACES = {}
@@ -142,8 +143,9 @@ def config_into_from_file(filename, namespace):
         namespace (string): namespace
     """
     for a_filename in glob(filename):
+        namespace_key = splitext(basename(a_filename))[0]
         json_data = _load_json(a_filename)
-        config_into(json_data, namespace)
+        config_into(json_data, '{}.{}'.format(namespace, namespace_key))
 
 
 def config_set(key, value, namespace=None):
