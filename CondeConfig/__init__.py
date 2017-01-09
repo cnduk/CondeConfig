@@ -1,3 +1,4 @@
+from collections import Mapping
 from glob import glob
 import json
 from os.path import basename, splitext
@@ -5,7 +6,10 @@ from keyword import iskeyword
 
 import six
 
+# map of <namespace tuple>: (_Config(), config_dict)
+# Used by the _Config items to look up their values
 _NAMESPACES = {}
+# map of _Config(): (config_dict, <namespace tuple>)
 _OBJECTS = {}
 
 __ALL__ = [
@@ -17,10 +21,26 @@ __ALL__ = [
     'config_set',
 ]
 
-class _Config(object):
 
-    def __contains__(self, key):
-        return key in self._config_items
+class _Config(Mapping):
+    # The Following method definitions __getitem__, __iter__ and __len__
+    # are required as a subclass of Mapping
+    def __getitem__(self, key):
+        # This is required by collections.Mapping
+        return self._config_items[key]
+
+    def __iter__(self):
+        # Through this, collections.Mapping can use __getitem__ to fulfil
+        # items(), values(), and keys() (and their iter* counterparts
+        # in python 2.x)
+        return iter(self._config_items)
+
+    def __len__(self):
+        return len(self._config_items)
+
+    # This is overridden by Mapping, so let's just put it back
+    def __hash__(self):
+        return id(self)
 
     def __getattr__(self, name):
         # Because self._namespaces is set in the objects dict,
@@ -31,18 +51,11 @@ class _Config(object):
         except KeyError:
             raise AttributeError("attribute value not set {}".format(name))
 
-    def __getitem__(self, key):
-        # Could catch and raise specific error here.
-        return self._config_items[key]
-
-    def __repr__(self):
-        return '<{} ns={}>'.format(self.__class__.__name__, self._namespace)
-
     def __setattr__(self, name, val):
         raise AttributeError("item assignment not supported")
 
-    def __setitem__(self, *args):
-        raise Exception("cannot set items")
+    def __repr__(self):
+        return '<{} ns={}>'.format(self.__class__.__name__, self._namespace)
 
     @property
     def _config_items(self):
@@ -52,17 +65,22 @@ class _Config(object):
     def _namespace(self):
         return _OBJECTS[self][1]
 
-    def get(self, *args, **kwargs):
-        """Gets a value from the config
+    def get(self, key, default=None):
+        return self._config_items.get(key, default)
 
-        Args:
-            *args (list): list of arguments
-            **kwargs (dict): dict of keyword args
+    def get_namespaces(self):
+        """Returns a dict of namespace*:_Config() for configs in one namespace
+            below the given namespace.
 
-        Returns:
-            any: the value
+            *namespace releated to this current config
         """
-        return self._config_items.get(*args, **kwargs)
+        return {
+            namespace[-1]: config
+            for namespace, (config, _)
+            in _NAMESPACES.iteritems()
+            if len(self._namespace)+1 == len(namespace)
+            and self._namespace == namespace[:-1]
+        }
 
 
 def _create_namespace(namespace):
