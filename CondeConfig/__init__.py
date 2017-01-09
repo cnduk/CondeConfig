@@ -43,6 +43,10 @@ class _Config(object):
         raise Exception("cannot set items")
 
     @property
+    def __dict__(self):
+        return _get_namespace_dict(self._namespace)
+
+    @property
     def _config_items(self):
         return _OBJECTS[self][0]
 
@@ -68,6 +72,27 @@ def _create_namespace(namespace):
     new_cfg = _Config()
     _OBJECTS[new_cfg] = (new_items, namespace)
     _NAMESPACES[namespace] = (new_cfg, new_items)
+
+
+def _get_namespace_dict(namespace):
+
+    o = {}
+    depth = len(namespace) + 1
+    found = True
+    for namespace_key, namespace_value in _NAMESPACES.iteritems():
+        found = True
+        # We only want namespaces that are one descendant lower than the
+        # current namespace
+        if len(namespace_key) == depth:
+            for index, key in enumerate(namespace):
+                if namespace_key[index] != key:
+                    found = False
+                    break
+
+            if found:
+                o[namespace_key[-1]] = namespace_value[1]
+
+    return o
 
 
 def _load_json(filename):
