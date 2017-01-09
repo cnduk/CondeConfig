@@ -1,6 +1,8 @@
 from glob import glob
 import json
 from os.path import basename, splitext
+from keyword import iskeyword
+
 import six
 
 _NAMESPACES = {}
@@ -64,6 +66,25 @@ class _Config(object):
 
 
 def _create_namespace(namespace):
+    msg = None
+    for word in namespace:
+        if not all(char.isalnum() or char=='_' for char in word):
+            msg = "namespace words can only contain alphanumeric " \
+                    "characters or underscores."
+
+        elif iskeyword(word):
+            msg = "namespaces can't contain keywords."
+
+        elif word.startswith('_'):
+            msg = "Namespaces can't contain words starting with an underscore."
+
+        elif word[0].isdigit():
+            msg = "Namespaces can't contain words starting with a number."
+
+        if msg:
+            raise ValueError(
+                    msg + " found \"{}\" in {}".format(word, namespace))
+
     new_items = {}
     new_cfg = _Config()
     _OBJECTS[new_cfg] = (new_items, namespace)
