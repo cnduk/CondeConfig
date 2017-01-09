@@ -17,6 +17,9 @@ __ALL__ = [
 
 class _Config(object):
 
+    def __contains__(self, key):
+        return key in self._config_items
+
     def __getattr__(self, name):
         # Because self._namespaces is set in the objects dict,
         # __getattr__ is not called when accessing self._namespaces
