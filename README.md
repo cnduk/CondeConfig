@@ -1,3 +1,3 @@
 #CondeConfig
 
-👏 This is a config reader. 👏
+This is a config reader.
