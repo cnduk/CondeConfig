@@ -77,7 +77,7 @@ class _Config(Mapping):
         return {
             namespace[-1]: config
             for namespace, (config, _)
-            in _NAMESPACES.iteritems()
+            in _NAMESPACES.items()
             if len(self._namespace)+1 == len(namespace)
             and self._namespace == namespace[:-1]
         }
